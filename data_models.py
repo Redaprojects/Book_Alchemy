@@ -37,7 +37,7 @@ class Book(db.Model):
     title = db.Column(db.String(200), nullable=False)
     publication_year = db.Column(db.Integer)
 
-    author_id = db.Column(db.Integer, db.ForignKey('author.id'), nullable=False)
+    author_id = db.Column(db.Integer, db.ForeignKey('authors.id'), nullable=False)
 
     # Many-to-one relationship: book belongs to one author
     author = db.relationship("Author", back_populates="books")
@@ -46,4 +46,5 @@ class Book(db.Model):
         return f"{self.title} {self.author.name} ({self.publication_year} - ISBN:{self.isbn})"
 
     def __repr__(self):
-        return f"<Book id={self.id}, title={self.title}, publication_year={self.publication_year}, isbn='{self.isbn}', author_id={self.author_id})>"
+        return (f"<Book id={self.id}, title={self.title}, publication_year={self.publication_year},"
+                f" isbn={self.isbn}, author_id={self.author_id})>")
