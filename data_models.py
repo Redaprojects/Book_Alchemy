@@ -1,4 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import Date
+
 
 # # Create SQLAlchemy object (used in app.py via db.init_app(app))
 db = SQLAlchemy()
@@ -12,9 +14,9 @@ class Author(db.Model):
     __tablename__ = 'authors'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    name = db.Column(db.String(100))
-    birth_date = db.Column(db.String(10), nullable=False)
-    date_of_death = db.Column(db.String(10))
+    name = db.Column(db.String(100), nullable=False)
+    birth_date = db.Column(Date, nullable=False) #db.date
+    date_of_death = db.Column(Date)
 
     # One-to-many relationship: author has many books
     books = db.relationship('Book', back_populates='author', cascade='all, delete-orphan')
@@ -23,7 +25,9 @@ class Author(db.Model):
         return f"<Author(id=self.id, name={self.name})>"
 
     def __str__(self):
-        return f"{self.name} ({self.birth_date} - {self.date_of_death})"
+        death = self.date_of_death.strftime('%Y-%m-%d') if self.date_of_death else "Still Alive"
+        return f"{self.name} ({self.birth_date.strftime('%Y-%m-%d')} - {death})"
+
 
 class Book(db.Model):
     """
@@ -35,7 +39,7 @@ class Book(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     isbn = db.Column(db.String(13), unique=True, nullable=False)
     title = db.Column(db.String(200), nullable=False)
-    publication_year = db.Column(db.Integer)
+    publication_year = db.Column(db.Integer, nullable=False)
 
     author_id = db.Column(db.Integer, db.ForeignKey('authors.id'), nullable=False)
 

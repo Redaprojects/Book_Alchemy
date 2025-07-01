@@ -1,18 +1,33 @@
+<!-- templates/add_book.html -->
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  </head>
-  <body>
+    <title>Add Book</title>
+</head>
+<body>
+    <h2>➕ Add a New Book</h2>
+    <form action="/new_book" method="POST">
+        <label for="title">Book Title:</label><br>
+        <input type="text" id="title" name="title" required><br><br>
 
-  <form action="/add_book" method="POST">
-  <!-- Add the form here -->
-    <label for="title">Book Title:</label>
-  <input type="text" id="title" name="title" required><br><br>
-    <button type="submit">Submit</button>>
-  </form>
+        <label for="isbn">ISBN:</label><br>
+        <input type="number" id="isbn" name="isbn"><br><br>
 
-  </body>
+        <label for="publication_year">Publication Year:</label>
+        <input type="number" id="publication_year" name="publication_year" required><br><br>
+
+        <label for="author_id">Author:</label>
+        <select id="author_id" name="author_id" required>
+            {% for author in authors %}
+                <option value="{{ author.id }}">{{ author.name }}</option>
+            {% endfor %}
+        </select><br><br>
+
+        <button type="submit">Submit</button>
+    </form>
+
+    <br>
+    <a href="/">Back to Home</a>
+</body>
 </html>
