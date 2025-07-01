@@ -127,5 +127,28 @@ def home():
     return render_template('home.html', books=books, sort=sort)
 
 
+@app.route('/book/<int:book_id>/delete', methods=['POST'])
+def delete_book(book_id):
+    """
+    Deletes a book by ID. If the author has no other books left, delete the author too.
+    Redirects to the homepage with a success message.
+    """
+    book = Book.query.get_or_404(book_id)
+    author = book.author
+
+    db.session.delete(book)
+    db.session.commit()
+
+    # Check if the author has any books left.
+    remaining_books = Book.query.filter_by(author_id=author.id).count()
+    if remaining_books == 0:
+        db.session.delete(author)
+        db.session.commit()
+        flash(f"Book {book.title} and author {author.name} deleted.")
+    else:
+        flash(f"Book {book.title} deleted successfully.")
+
+    return redirect(url_for('home'))
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000, host="0.0.0.0")
