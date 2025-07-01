@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}{{ author.name }}{% endblock %}
+
+{% block content %}
+<h2>{{ author.name }}</h2>
+<p><strong>Born:</strong> {{ author.birth_date }}</p>
+<p>
+  <strong>Status:</strong>
+  {% if author.date_of_death %}
+    Deceased on {{ author.date_of_death.strftime('%B %d, %Y') }}
+  {% else %}
+    Alive
+  {% endif %}
+</p>
+
+<h3 class="mt-4">Books by {{ author.name }}</h3>
+<ul class="list-group">
+  {% for book in author.books %}
+    <li class="list-group-item">
+      <a href="{{ url_for('book_detail', book_id=book.id) }}">{{ book.title }}</a>
+      ({{ book.publication_year }})
+    </li>
+  {% else %}
+    <li class="list-group-item text-muted">No books available.</li>
+  {% endfor %}
+</ul>
+
+<a href="{{ url_for('home') }}" class="btn btn-secondary mt-3">Back to Library</a>
+{% endblock %}
