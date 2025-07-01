@@ -1,5 +1,6 @@
 import os
 from flask import Flask, render_template, request, flash, redirect, url_for
+from sqlalchemy import or_
 import requests  # For cover image lookup
 # SQLAlchemy: ORM we will use to define and manage models.
 from data_models import db, Author, Book
@@ -93,22 +94,37 @@ def add_book():
 @app.route('/', methods=['GET'])
 def home():
     """
-    Display all books with sorting and cover images.
-    Supports ?sort=title or ?sort=author.
+    Display books with optional sorting and keyword search.
+    - Supports ?sort=title or ?sort=author.
+    - Supports ?search=keyword to search book titles and author names.
     """
     sort = request.args.get('sort', 'title')
-    if sort == 'author':
-        books = Book.query.join(Author).order_by(Author.name).all()
-    else:
-        books = Book.query.order_by(Book.title).all()
+    keyword = request.args.get('search', '').strip()
 
-    # Fetch cover images using Open Library API (https://covers.openlibrary.org)
+    if keyword:
+        # Perform case-insensitive search in book title or author name
+        books = Book.query.join(Author).filter(
+            or_(
+                Book.title.ilike(f"%{keyword}%"),
+                Author.name.ilike(f"%{keyword}%")
+            )
+        ).order_by(Book.title).all()
+
+        if not books:
+            flash(f"No books found for '{keyword}'")
+    else:
+        # Default: show all books, sorted
+        if sort == 'author':
+            books = Book.query.join(Author).order_by(Author.name).all()
+        else:
+            books = Book.query.order_by(Book.title).all()
+
+    # Add cover images from Open Library
     for book in books:
         book.cover_url = (f"https://covers.openlibrary.org/b/isbn/{book.isbn}-M.jpg"
                           if book.isbn else None)
+
     return render_template('home.html', books=books, sort=sort)
-
-
 
 
 if __name__ == '__main__':
