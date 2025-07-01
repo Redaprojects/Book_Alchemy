@@ -1,25 +1,27 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Add Author</title>
-  </head>
-  <body>
+{% extends "base.html" %}
+{% block title %}Add Author{% endblock %}
 
-  <form action="/new_author" method="POST">
-  <label for="name">Author Name:</label>
-  <input type="text" id="name" name="name" required><br><br>
+{% block content %}
+<h2 class="mb-4">➕ Add Author</h2>
+<form method="POST" class="row g-3">
+  <div class="col-md-6">
+    <label for="name" class="form-label">Author Name</label>
+    <input type="text" class="form-control" id="name" name="name" required>
+  </div>
 
-  <label for="birth_date">Birthdate:</label>
-  <input type="date" id="birth_date" name="birth_date" required><br><br>
+  <div class="col-md-6">
+    <label for="birth_date" class="form-label">Birth Date</label>
+    <input type="date" class="form-control" id="birth_date" name="birth_date" required>
+  </div>
 
-  <label for="date_of_death">Date of Death:</label>
-  <input type="date" id="date_of_death" name="date_of_death"><br><br>
+  <div class="col-md-6">
+    <label for="date_of_death" class="form-label">Date of Death (if applicable)</label>
+    <input type="date" class="form-control" id="date_of_death" name="date_of_death">
+  </div>
 
-  <input type="submit" value="Add Author">
-  </form>
-
-  </body>
-</html>
+  <div class="col-12">
+    <button type="submit" class="btn btn-success">Add Author</button>
+    <a href="{{ url_for('home') }}" class="btn btn-secondary">Cancel</a>
+  </div>
+</form>
+{% endblock %}
