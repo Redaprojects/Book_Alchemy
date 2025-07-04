@@ -5,6 +5,7 @@ import requests  # For cover image lookup
 # SQLAlchemy: ORM we will use to define and manage models.
 from data_models import db, Author, Book
 from datetime import datetime
+from validators import is_valid_name, is_valid_rating, validate_dates, is_valid_year, is_valid_isbn
 
 
 # Make sure data directory exists
@@ -27,33 +28,44 @@ app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{db_path}"
 db.init_app(app)
 
 
-# with app.app_context():
-#   db.create_all()
+with app.app_context():
+  db.create_all()
 
 # if os.path.exists("data/library.sqlite"):
 #     print("✅ Database file created successfully!")
 
 @app.route('/new_author', methods=['GET', 'POST'])
 def add_author():
-    """
-    Route to add a new author to the database.
-    GET: Renders form to input author data.
-    POST: Extracts form data, saves new Author record to DB,
-    flashes a confirmation, and redirects to clear the form.
-    """
     if request.method == 'POST':
-        name = request.form['name']
-        # birth_date = request.form.get('birth_date', None)
-        # death_date = request.form.get('date_of_death', None)
-        birth_date_str = request.form.get('birth_date')
-        death_date_str = request.form.get('date_of_death')
+        name = request.form.get('name', '').strip()
+        birth_date_str = request.form.get('birth_date', '').strip()
+        death_date_str = request.form.get('date_of_death', '').strip()
 
-        birth_date = datetime.strptime(birth_date_str.strip(),
-                                       '%Y-%m-%d').date() if birth_date_str and birth_date_str.strip() else None
-        death_date = datetime.strptime(death_date_str.strip(),
-                                       '%Y-%m-%d').date() if death_date_str and death_date_str.strip() else None
+        try:
+            birth_date = datetime.strptime(birth_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            flash("Invalid birth date format.", "error")
+            return redirect(url_for('add_author'))
 
-        new_author = Author(name=name, birth_date= birth_date, date_of_death=death_date)
+        death_date = None
+        if death_date_str:
+            try:
+                death_date = datetime.strptime(death_date_str, '%Y-%m-%d').date()
+            except ValueError:
+                flash("Invalid death date format.", "error")
+                return redirect(url_for('add_author'))
+
+        # Validators
+        if not is_valid_name(name):
+            flash("Invalid author name. Only letters, spaces, hyphens, apostrophes allowed.", "error")
+            return redirect(url_for('add_author'))
+
+        is_dates_valid, error_msg = validate_dates(birth_date, death_date)
+        if not is_dates_valid:
+            flash(error_msg, "error")
+            return redirect(url_for('add_author'))
+
+        new_author = Author(name=name, birth_date=birth_date, date_of_death=death_date)
         db.session.add(new_author)
         db.session.commit()
         flash(f"Author {name} added successfully!")
@@ -64,25 +76,46 @@ def add_author():
 
 @app.route('/new_book', methods=['GET', 'POST'])
 def add_book():
-    """
-    Add a new book to the database.
-    GET: Fetch authors and display form with dropdown.
-    POST: Save book data (title, isbn, year, author_id) and flash success.
-    """
     authors = Author.query.order_by(Author.name).all()
+
     if request.method == 'POST':
-        print(request.form)  # 🔍 Debug: print form data
+        title = request.form.get('title', '').strip()
+        isbn = request.form.get('isbn', '').strip()
+        pub_year = request.form.get('publication_year', '').strip()
+        rating_str = request.form.get('rating', '').strip()
+        author_id = request.form.get('author_id')
 
-        title = request.form['title']
-        isbn = request.form['isbn']
-        pub_year = request.form.get('publication_year', None).strip()
-        author_id = request.form['author_id']
-
-        if not pub_year.isdigit():
-            flash("Publication year must be a number.", "error")
+        # Validations
+        if not title:
+            flash("Book title is required.", "error")
             return redirect(url_for('add_book'))
 
-        new_book = Book(title=title, isbn=isbn, publication_year=int(pub_year), author_id=author_id)
+        if not is_valid_year(pub_year):
+            flash("Invalid publication year.", "error")
+            return redirect(url_for('add_book'))
+
+        if not is_valid_isbn(isbn):
+            flash("ISBN must be a 13-digit number.", "error")
+            return redirect(url_for('add_book'))
+
+        rating = None
+        if rating_str:
+            try:
+                rating = float(rating_str)
+                if not is_valid_rating(rating_str):
+                    flash("Rating must be between 1.0 and 5.0 stars.", "error")
+                    return redirect(url_for('add_book'))
+            except ValueError:
+                flash("Invalid rating value.", "error")
+                return redirect(url_for('add_book'))
+
+        new_book = Book(
+            title=title,
+            isbn=isbn,
+            publication_year=int(pub_year),
+            rating=rating,
+            author_id=author_id
+        )
         db.session.add(new_book)
         db.session.commit()
         flash(f"Book {title} added successfully!")
@@ -183,4 +216,4 @@ def delete_author(author_id):
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000, host="0.0.0.0")
+    app.run(debug=True, port=5001, host="0.0.0.0")

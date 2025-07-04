@@ -2,9 +2,95 @@ body {
     font-family: 'Segoe UI', sans-serif;
 }
 
-.card h-100 shadow-sm {
-  height: 100px;
-  width: auto;
-  object-fit: contain;
+
+.col {
+  height: auto;
+  width: 300px;
+  object-fit: cover;
   border-radius: 5px;
 }
+
+.card-image-top {
+  height: 426px;
+  width: 274px;
+  object-fit: cover;
+  border-radius: 5px;
+}
+
+.card {
+  width: 272px;
+  height: auto;
+  overflow: hidden;
+  margin: 10px;
+}
+
+.card-img-top {
+  width: 272px;
+  height: 450px;
+  object-fit: cover;
+  border-radius: 5px;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  padding: 5px;
+  text-align: left;
+  justify-content: space-evenly;
+}
+
+.card.h-100.shadow-sm img {
+
+}
+
+
+.details{
+  padding: 4px;
+  margin: 1px;
+}
+
+#year{
+  padding: 4px;
+  margin-top: 4px;
+}
+
+div .star-rating{
+  margin-left: 5px;
+  padding: 1px;
+}
+
+.star-rating-input {
+  display: flex;
+  flex-direction: row-reverse;
+  font-size: 1.5rem;
+  justify-content: start;
+}
+.star-rating-input input[type="radio"] {
+  display: none;
+}
+.star-rating-input label {
+  color: lightgray;
+  cursor: pointer;
+  position: relative;
+}
+.star-rating-input input:checked ~ label,
+.star-rating-input label:hover,
+.star-rating-input label:hover ~ label {
+  color: gold;
+}
+.star-rating-input .half-star {
+  position: relative;
+  display: inline-block;
+  width: 0.75em;
+  overflow: hidden;
+}
+.star-rating-input .half-star:before {
+  content: '★';
+  position: absolute;
+  left: 0;
+  width: 50%;
+  overflow: hidden;
+  color: gold;
+}
+
+

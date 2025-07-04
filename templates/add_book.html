@@ -28,6 +28,23 @@
     </select>
   </div>
 
+  <div class="mb-3">
+  <label class="form-label">Rating (1–5 Stars, half-stars allowed)</label>
+  <div class="star-rating-input">
+    {% for value in [5, 4.5, 4, 3.5, 3, 2.5, 2, 1.5, 1] %}
+      <input type="radio" name="rating" id="star{{ value }}" value="{{ value }}">
+      <label class="star" for="star{{ value }}" title="{{ value }} stars">
+        {% if value % 1 == 0 %}
+          ★
+        {% else %}
+          <span class="half">★</span>
+        {% endif %}
+      </label>
+    {% endfor %}
+  </div>
+</div>
+
+
   <div class="col-12">
     <button type="submit" class="btn btn-success">Add Book</button>
     <a href="{{ url_for('home') }}" class="btn btn-secondary">Cancel</a>

@@ -29,15 +29,35 @@
             <img src="{{ book.cover_url }}" class="card-img-top" alt="Cover of {{ book.title }}">
           {% endif %}
           <div class="card-body">
+              <div class="details">
             <h6 class="card-title">
                 <strong>Book:</strong>
               <a href="{{ url_for('book_detail', book_id=book.id) }}">{{ book.title }}</a>
             </h6>
+                  </div>
+              <div class="details">
             <p class="card-text">
-              <strong>Author:</strong>
-              <a href="{{ url_for('author_detail', author_id=book.author.id) }}">{{ book.author.name }}</a><br>
-              <strong>Year:</strong> {{ book.publication_year }}
+                <strong>Author:</strong>
+                <a href="{{ url_for('author_detail', author_id=book.author.id) }}">{{ book.author.name }}</a><br>
+                <strong>Year:</strong> {{ book.publication_year }}
             </p>
+              </div>
+              <!-- Star Rating Display -->
+        <div class="star-rating ">
+          {% for i in range(1, 6) %}
+            {% if book.rating >= i %}
+              ★
+            {% elif book.rating >= i - 0.5 %}
+              <span style="position: relative; display: inline-block; width: 0.75em;">
+                <span style="position: absolute; width: 50%; overflow: hidden; color: gold;">★</span>
+                <span style="position: absolute; left: 50%; width: 50%; overflow: hidden; color: lightgray;">★</span>
+              </span>
+            {% else %}
+              ☆
+            {% endif %}
+          {% endfor %}
+          <span class="rating-number">({{ '%.1f'|format(book.rating) }}/5)</span>
+        </div>
           </div>
           <div class="card-footer">
             <form action="{{ url_for('delete_book', book_id=book.id) }}" method="POST" style="display:inline;">
