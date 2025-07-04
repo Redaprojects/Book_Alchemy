@@ -3,10 +3,12 @@ from flask import Flask, render_template, request, flash, redirect, url_for
 from sqlalchemy import or_
 import requests  # For cover image lookup
 # SQLAlchemy: ORM we will use to define and manage models.
-from data_models import db, Author, Book
+from data_models import db, Author, Book, Recommendation
 from datetime import datetime
 from validators import is_valid_name, is_valid_rating, validate_dates, is_valid_year, is_valid_isbn
+from dotenv import load_dotenv
 
+load_dotenv()
 
 # Make sure data directory exists
 # app = Flask(__name__)
@@ -213,6 +215,95 @@ def delete_author(author_id):
     db.session.commit()
     flash(f"Author {author.name} and all their books were deleted.")
     return redirect(url_for('home'))
+
+
+@app.route('/recommend/random', methods=['GET', 'POST'])
+def random_recommendation():
+    """
+    Get a random book recommendation from RapidAPI and render it.
+    """
+    url = "https://book-recommender1.p.rapidapi.com/recommend/random"
+    headers = {
+        "x-rapidapi-key": os.getenv("RAPIDAPI_KEY"),
+        "x-rapidapi-host": "book-recommender1.p.rapidapi.com"
+    }
+
+    suggestion = ""
+    error = None
+
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        data = response.json()
+        print("DEBUG random", data)
+
+        # Extract the actual recommendation from nested dictionary
+        book_info = data.get("book", {})
+        title = book_info.get("title")
+        author = book_info.get("author")
+        desc = book_info.get("description")
+
+        if title and author:
+            suggestion = f"📖 <strong>{title}</strong> by <em>{author}</em><br><br>{desc or ''}"
+        else:
+            suggestion = "No recommendation found."
+
+        # Save to DB (optional, if Recommendation model exists)
+        db.session.add(Recommendation(prompt="random", suggestion=suggestion, source="random"))
+        db.session.commit()
+        cover_url = book_info.get("coverImage", None)
+
+    except Exception as e:
+        error = f"⚠️ Error: {e}"
+
+    recs = Recommendation.query.order_by(Recommendation.timestamp.desc()).limit(5).all()
+    return render_template("recommendation.html", suggestion=suggestion, error=error, recs=recs, cover_url=cover_url)
+
+
+@app.route('/recommend/chat', methods=['GET', 'POST'])
+def chat_recommendation():
+    """
+    Generate a book recommendation using an AI chat endpoint via RapidAPI.
+    Uses titles + ratings from the database.
+    """
+    books = Book.query.all()
+    book_lines = [
+        f"- {book.title} by {book.author.name} (Rating: {book.rating or 'N/A'})"
+        for book in books
+    ]
+    prompt = "Here is a list of books the user has read:\n\n" + "\n".join(book_lines) + \
+             "\n\nBased on this, recommend a great book the user hasn't read yet. Explain why."
+
+    # RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY") access api this way or:
+    # Define the payload and headers for chatgpt-42
+    url = "https://chatgpt-42.p.rapidapi.com/aitohuman"
+    payload = {"text": prompt}
+    headers = {
+        "Content-Type": "application/json",
+        "X-RapidAPI-Key": os.getenv("RAPIDAPI_KEY"),
+        "X-RapidAPI-Host": "chatgpt-42.p.rapidapi.com"
+    }
+
+    suggestion = ""
+    error = None
+
+    try:
+        response = requests.post(url, json=payload, headers=headers, timeout=30)
+        response.raise_for_status()
+        data = response.json()
+        print("DEBUG CHAT API:", response.json())
+        suggestion = data.get("output" or data.get("text") or "No suggestion found.")
+
+        # Save to database
+        db.session.add(Recommendation(prompt=prompt, suggestion=suggestion, source="chat"))
+        db.session.commit()
+
+    except Exception as e:
+        error = f"⚠️ API Error: {e}"
+
+    # Show last 5
+    recs = Recommendation.query.order_by(Recommendation.timestamp.desc()).limit(5).all()
+    return render_template("recommendation.html", suggestion=suggestion, error=error, recs=recs)
 
 
 if __name__ == '__main__':

@@ -93,4 +93,22 @@ div .star-rating{
   color: gold;
 }
 
+/* Global styling for all <a> links */
+a {
+  text-decoration: none;     /* removes underline */
+  color: #007bff;            /* change this to your desired color */
+}
+
+/* Optional: style on hover */
+a:hover {
+  color: #0056b3;            /* darker shade when hovered */
+  text-decoration: none; /* remove underline on hover */
+}
+
+.recommendation-text {
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+
 

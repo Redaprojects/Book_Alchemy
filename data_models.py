@@ -1,5 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Date
+from datetime import datetime
 
 
 # # Create SQLAlchemy object (used in app.py via db.init_app(app))
@@ -53,3 +54,12 @@ class Book(db.Model):
     def __repr__(self):
         return (f"<Book id={self.id}, title={self.title}, publication_year={self.publication_year},"
                 f" isbn={self.isbn}, author_id={self.author_id})>")
+
+
+class Recommendation(db.Model):
+    __tablename__ = 'recommendations'
+    id = db.Column(db.Integer, primary_key=True)
+    prompt = db.Column(db.Text, nullable=False)
+    suggestion = db.Column(db.Text, nullable=False)
+    source = db.Column(db.String(20), default="chat")  # chat or random
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
