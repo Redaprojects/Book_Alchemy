@@ -5,7 +5,7 @@
 
 {% if error %}
   <div class="alert alert-danger">{{ error }}</div>
-{% elif suggestion %}
+{% elif suggestion|safe %}
   <div class="alert alert-success">
     <!-- image cover_url -->
     <div class="alert alert-success">
@@ -16,14 +16,8 @@
   <div class="recommendation-text">
     {{ suggestion|safe }}
   </div>
-
-  <div class="mt-2">
-    <small class="text-muted">Source: {{ recs[0].source | capitalize }}</small>
-  </div>
 </div>
 
-
-    {{ suggestion }}
     <br>
     <small class="text-muted">
       Source: {{ recs[0].source | capitalize }}
