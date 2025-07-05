@@ -61,5 +61,10 @@ class Recommendation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     prompt = db.Column(db.Text, nullable=False)
     suggestion = db.Column(db.Text, nullable=False)
-    source = db.Column(db.String(20), default="chat")  # chat or random
+    source = db.Column(db.String(20), default="random")   # random
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    cover_url = db.Column(db.String(300))  # book cover image link
+    rating = db.Column(db.Float)
+
+    def __repr__(self):
+        return f"<Recommendation {self.id} - {self.source}>"

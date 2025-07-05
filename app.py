@@ -29,6 +29,9 @@ app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{db_path}"
 # Binds database instance to app
 db.init_app(app)
 
+from flask_migrate import Migrate
+
+migrate = Migrate(app, db)
 
 with app.app_context():
   db.create_all()
@@ -229,6 +232,7 @@ def random_recommendation():
     }
 
     suggestion = ""
+    cover_url = None
     error = None
 
     try:
@@ -242,68 +246,34 @@ def random_recommendation():
         title = book_info.get("title")
         author = book_info.get("author")
         desc = book_info.get("description")
+        cover_url = book_info.get("coverImage", "")
 
         if title and author:
             suggestion = f"📖 <strong>{title}</strong> by <em>{author}</em><br><br>{desc or ''}"
         else:
             suggestion = "No recommendation found."
+        rating = book_info.get("rating")
 
-        # Save to DB (optional, if Recommendation model exists)
-        db.session.add(Recommendation(prompt="random", suggestion=suggestion, source="random"))
+        # Convert to float if not 'N/A'
+        try:
+            rating = float(rating) if rating and rating != 'N/A' else None
+        except ValueError:
+            rating = None
+
+        # Save new recommendation to DB
+        new_rec = Recommendation(prompt="random", suggestion=suggestion, source="random", cover_url=cover_url, rating=rating)
+        db.session.add(new_rec)
         db.session.commit()
-        cover_url = book_info.get("coverImage", None)
 
     except Exception as e:
         error = f"⚠️ Error: {e}"
+        return render_template("recommendation.html", suggestion="", error=error, recs=[], cover_url=None)
 
-    recs = Recommendation.query.order_by(Recommendation.timestamp.desc()).limit(5).all()
+    # Get the 5 latest, excluding the one we just added
+    recs = Recommendation.query.filter(Recommendation.suggestion != suggestion) \
+        .order_by(Recommendation.timestamp.desc()).limit(5).all()
+
     return render_template("recommendation.html", suggestion=suggestion, error=error, recs=recs, cover_url=cover_url)
-
-
-@app.route('/recommend/chat', methods=['GET', 'POST'])
-def chat_recommendation():
-    """
-    Generate a book recommendation using an AI chat endpoint via RapidAPI.
-    Uses titles + ratings from the database.
-    """
-    books = Book.query.all()
-    book_lines = [
-        f"- {book.title} by {book.author.name} (Rating: {book.rating or 'N/A'})"
-        for book in books
-    ]
-    prompt = "Here is a list of books the user has read:\n\n" + "\n".join(book_lines) + \
-             "\n\nBased on this, recommend a great book the user hasn't read yet. Explain why."
-
-    # RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY") access api this way or:
-    # Define the payload and headers for chatgpt-42
-    url = "https://chatgpt-42.p.rapidapi.com/aitohuman"
-    payload = {"text": prompt}
-    headers = {
-        "Content-Type": "application/json",
-        "X-RapidAPI-Key": os.getenv("RAPIDAPI_KEY"),
-        "X-RapidAPI-Host": "chatgpt-42.p.rapidapi.com"
-    }
-
-    suggestion = ""
-    error = None
-
-    try:
-        response = requests.post(url, json=payload, headers=headers, timeout=30)
-        response.raise_for_status()
-        data = response.json()
-        print("DEBUG CHAT API:", response.json())
-        suggestion = data.get("output" or data.get("text") or "No suggestion found.")
-
-        # Save to database
-        db.session.add(Recommendation(prompt=prompt, suggestion=suggestion, source="chat"))
-        db.session.commit()
-
-    except Exception as e:
-        error = f"⚠️ API Error: {e}"
-
-    # Show last 5
-    recs = Recommendation.query.order_by(Recommendation.timestamp.desc()).limit(5).all()
-    return render_template("recommendation.html", suggestion=suggestion, error=error, recs=recs)
 
 
 if __name__ == '__main__':

@@ -7,16 +7,10 @@
 
 <h2>📚 Book Recommendations</h2>
 
-<a href="{{ url_for('chat_recommendation') }}" class="btn btn-outline-primary mb-3 me-2">
-  💡 Get Smart Recommendation (ChatGPT via RapidAPI)
-</a>
-
 <a href="{{ url_for('random_recommendation') }}" class="btn btn-outline-warning mb-3">
   🎲 Random Book (AI)
 </a>
-{% if request.path == '/recommend/chat' %}
-  <h2>💬 ChatGPT Recommendation</h2>
-{% elif request.path == '/recommend/random' %}
+{% if request.path == '/recommend/random' %}
   <h2>🎲 Random Book Recommendation</h2>
 {% endif %}
 

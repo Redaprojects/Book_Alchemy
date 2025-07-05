@@ -17,7 +17,9 @@
     {{ suggestion|safe }}
   </div>
 </div>
-
+    {% if recs[0].rating %}
+      <p><strong>Rating:</strong> {{ '%.1f'|format(recs[0].rating) }}/5</p>
+    {% endif %}
     <br>
     <small class="text-muted">
       Source: {{ recs[0].source | capitalize }}
@@ -37,9 +39,19 @@
   <ul class="list-group">
     {% for rec in recs %}
       <li class="list-group-item">
+
         <strong>{{ rec.source | capitalize }}</strong> –
         {{ rec.timestamp.strftime('%Y-%m-%d %H:%M') }}<br>
-        {{ rec.suggestion }}
+
+        {% if rec.cover_url %}
+          <img src="{{ rec.cover_url }}" alt="Cover" style="height: 150px;" class="img-thumbnail mb-2"><br>
+        {% endif %}
+
+        {{ rec.suggestion|safe }}
+
+        {% if rec.rating %}
+          <small>⭐ Rating: {{ '%.1f'|format(rec.rating) }}/5</small>
+        {% endif %}
       </li>
     {% endfor %}
   </ul>
